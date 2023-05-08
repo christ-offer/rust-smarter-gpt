@@ -24,7 +24,7 @@ pub async fn review_answers(question: &str, messages: &[String; 3]) -> Result<St
 
     let request = CreateChatCompletionRequestArgs::default()
         .max_tokens(512u16)
-        .model("gpt-4")
+        .model("gpt-3.5-turbo")
         .temperature(0.2)
         .messages([
             ChatCompletionRequestMessageArgs::default()

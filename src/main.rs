@@ -25,8 +25,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
         if question.to_lowercase() == "exit" {
             break;
         }
+        
+        // stringify the chat history
+        let mut chat_history_string = String::new();
+        for message in &chat_history {
+            chat_history_string.push_str(&format!("{}: {}\n", message.sender, message.message));
+        }
+        
+        //println!("Chat history:\n{}", &chat_history_string);
 
-        let responses = process_question(&question).await?;
+        let responses = process_question(&question, &chat_history_string).await?;
 
         let review = review_answers(&question, &responses).await?;
 
