@@ -6,17 +6,48 @@ use utils::intern::process_question;
 use utils::researcher::review_answers;
 use utils::professor::final_answer;
 
+#[derive(Debug)]
+struct ChatMessage {
+    sender: String,
+    message: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("Please enter your question:");
-    let mut question = String::new();
-    io::stdin().read_line(&mut question)?;
+    let mut chat_history: Vec<ChatMessage> = Vec::new();
 
-    let responses = process_question(&question.trim()).await?;
+    loop {
+        println!("Please enter your question (type 'exit' to quit):");
+        let mut question = String::new();
+        io::stdin().read_line(&mut question)?;
 
-    let review = review_answers(&question.trim(), &responses).await?;
-    
-    let _final_answer = final_answer(&question.trim(), &responses, &review).await?;
-    
+        let question = question.trim();
+        if question.to_lowercase() == "exit" {
+            break;
+        }
+
+        let responses = process_question(&question).await?;
+
+        let review = review_answers(&question, &responses).await?;
+
+        let final_answer = final_answer(&question, &responses, &review).await?;
+
+        chat_history.push(ChatMessage {
+            sender: "user".to_string(),
+            message: question.to_string(),
+        });
+        chat_history.push(ChatMessage {
+            sender: "assistant".to_string(),
+            message: final_answer.clone(),
+        });
+
+        println!("\n");
+    }
+
+    println!("Chat history:");
+    for message in &chat_history {
+        println!("{}: {}", message.sender, message.message);
+    }
+
     Ok(())
 }

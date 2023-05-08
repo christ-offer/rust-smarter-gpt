@@ -7,7 +7,7 @@ use async_openai::{
 use futures::future::join_all;
 
 pub async fn process_question(question: &str) -> Result<[String; 3], Box<dyn Error>> {
-    println!(r"\n\n\ Interns are going to work:\n\n");
+    println!("Interns are going to work:\n\n");
     let client = Client::new();
 
     let temperatures = [0.3, 0.5, 0.7];
