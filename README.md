@@ -18,7 +18,7 @@ Set the OPENAI_API_KEY environment variable to your OpenAI API key.
 export OPENAI_API_KEY=your-api-key
 ```
 
-Then run the program with the question as the first argument.
+Then run the program and you will be prompted for a question
 
 ```bash
 cargo run
