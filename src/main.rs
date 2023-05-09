@@ -6,15 +6,22 @@ use utils::intern::process_question;
 use utils::researcher::review_answers;
 use utils::professor::final_answer;
 
-#[derive(Debug)]
 struct ChatMessage {
-    sender: String,
-    message: String,
+    question: String,
+    intern_responses: [String; 3],
+    researcher_response: String,
+    professor_response: String,
+}
+
+struct ChatHistory {
+    chat_history: Vec<ChatMessage>,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut chat_history: Vec<ChatMessage> = Vec::new();
+    let mut chat_history = ChatHistory {
+        chat_history: Vec::new(),
+    };
 
     loop {
         println!("Please enter your question (type 'exit' to quit):");
@@ -25,36 +32,42 @@ async fn main() -> Result<(), Box<dyn Error>> {
         if question.to_lowercase() == "exit" {
             break;
         }
-        
         // stringify the chat history
         let mut chat_history_string = String::new();
-        for message in &chat_history {
-            chat_history_string.push_str(&format!("{}: {}\n", message.sender, message.message));
+        for message in &chat_history.chat_history {
+            chat_history_string.push_str(&format!("User: {}\n", message.question));
+            for (i, intern_response) in message.intern_responses.iter().enumerate() {
+                chat_history_string.push_str(&format!("Intern {}: {}\n", i + 1, intern_response));
+            }
+            chat_history_string.push_str(&format!("Researcher: {}\n", message.researcher_response));
+            chat_history_string.push_str(&format!("Assistant: {}\n", message.professor_response));
         }
-        
-        //println!("Chat history:\n{}", &chat_history_string);
 
-        let responses = process_question(&question, &chat_history_string).await?;
+        let intern_responses = process_question(&question, &chat_history_string).await?;
 
-        let review = review_answers(&question, &responses).await?;
 
-        let final_answer = final_answer(&question, &responses, &review).await?;
+        let researcher_response = review_answers(&question, &intern_responses).await?;
 
-        chat_history.push(ChatMessage {
-            sender: "user".to_string(),
-            message: question.to_string(),
-        });
-        chat_history.push(ChatMessage {
-            sender: "assistant".to_string(),
-            message: final_answer.clone(),
+        let professor_response = final_answer(&question, &intern_responses, &researcher_response).await?;
+
+        chat_history.chat_history.push(ChatMessage {
+            question: question.to_string(),
+            intern_responses,
+            researcher_response,
+            professor_response: professor_response.clone(),
         });
 
-        println!("\n");
+        println!("\nAssistant: {}", professor_response);
     }
 
     println!("Chat history:");
-    for message in &chat_history {
-        println!("{}: {}", message.sender, message.message);
+    for message in &chat_history.chat_history {
+        println!("User: {}", message.question);
+        for (i, intern_response) in message.intern_responses.iter().enumerate() {
+            println!("Intern {}: {}", i + 1, intern_response);
+        }
+        println!("Researcher: {}", message.researcher_response);
+        println!("Assistant: {}\n", message.professor_response);
     }
 
     Ok(())
